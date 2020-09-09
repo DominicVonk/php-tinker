@@ -1,9 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
-const cp = require('child_process');
-const fs = require('fs');
-
+const spawn = require('child_process').spawn;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 
@@ -33,27 +31,46 @@ function runner(obj) {
 		clearTimeout(obj.running);
 	}
 	if (obj.child) {
-		obj.child.kill('SIGKILL');
+		obj.child.kill();
 	}
 	if (obj.hadPanel && !obj.panel) {
 		createPanel(obj)
 	}
 	obj.running = setTimeout(function () {
-		fs.writeFileSync('/tmp/tinker', obj.document.getText());
-		obj.child = cp.exec('cd "' + vscode.workspace.workspaceFolders[0].uri.fsPath + '" && VAR_DUMPER_FORMAT=html php artisan tinker /tmp/tinker', (err, stdout, stderr) => {
-			if (stdout) {
-				obj.panel.webview.html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>PHP Tinker</title>
-</head>
-<body>${stdout}<style>html,body {background:#18171B;} * {outline: 0}</style></body></html>`;
-			}
-			fs.unlinkSync('/tmp/tinker');
+
+		let code = obj.document.getText().replace('<?php', '').trim() + ';dd();';
+
+		let child = spawn('php', ['artisan', 'tinker'], {
+			cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
+			env: {
+				...process.env,
+				"VAR_DUMPER_FORMAT": "html",
+			},
+			stdio: ['pipe', 'pipe', 'pipe']
 		});
-	}, 1000);
+		obj.child = child;
+		let stdoutput = '';
+		child.stdout.on('data', (data) => {
+			stdoutput += data.toString();
+		});
+		child.stderr.on('data', (data) => {
+			stdoutput += data.toString();
+		});
+		child.stdout.on('end', () => {
+			obj.panel.webview.html = `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>PHP Tinker</title>
+			</head>
+			<body>${'<pre>' + stdoutput + '</pre>'}<style>html,body {background:#18171B;color:#fff;} * {outline: 0}</style></body ></html > `;
+		});
+		child.stdin.write(code, () => {
+			child.stdin.end();
+		})
+
+	}, 300);
 }
 /**
  * @param {vscode.ExtensionContext} context
@@ -62,7 +79,9 @@ function activate(context) {
 	let obj = {
 		context,
 		document: null,
-		hadPanel: false
+		hadPanel: false,
+		terminal: null,
+		terminalEvent: null
 	};
 	let disposable = vscode.commands.registerCommand('php-tinker.tinkerThis', async function () {
 		// The code you place here will be executed every time your command is executed
@@ -97,8 +116,10 @@ function activate(context) {
 				obj.document = null;
 			}
 		}));
+		let text = obj.document.getText();
 		context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection((changeText) => {
-			if (changeText.textEditor.document === obj.document) {
+			if (changeText.textEditor.document === obj.document && text !== changeText.textEditor.document.getText()) {
+				text = changeText.textEditor.document.getText()
 				runner(obj);
 			}
 		}))
