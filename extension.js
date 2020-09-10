@@ -78,54 +78,94 @@ function runner(obj) {
 function activate(context) {
 	let obj = {
 		context,
-		document: null,
-		hadPanel: false,
-		terminal: null,
-		terminalEvent: null
+		_template: {
+			document: null,
+			hadPanel: false,
+			running: null,
+			child: null,
+			text: '',
+			context
+		},
+		editors: new WeakMap()
 	};
-	let disposable = vscode.commands.registerCommand('php-tinker.tinkerThis', async function () {
+	let previousDocument = vscode.window.activeTextEditor.document;
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((textEditor) => {
+		let document = textEditor.document;
+		if (obj.editors.has(document)) {
+			if (obj.editors.get(document).panel) {
+				runner(obj.editors.get(document));
+				obj.editors.get(document).hadPanel = true;
+			}
+		}
+		if (previousDocument && obj.editors.has(previousDocument) && obj.editors.get(previousDocument).panel) {
+			if (obj.editors.get(previousDocument).panel) {
+				obj.editors.get(previousDocument).panel.dispose();
+				obj.editors.get(previousDocument).hadPanel = true;
+			}
+		}
+		previousDocument = document;
+	}));
+	context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(textDoc => {
+		let document = textDoc;
+		if (obj.editors.has(document)) {
+			obj.editors.get(document).panel.dispose();
+			obj.editors.delete(document);
+		}
+	}));
+
+	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection((changeText) => {
+		let document = changeText.textEditor.document;
+		if (obj.editors.has(document) && obj.editors.get(document).text !== document.getText()) {
+			obj.editors.get(document).text = document.getText()
+			runner(obj.editors.get(document));
+		}
+	}))
+
+	let disposableStop = vscode.commands.registerCommand('php-tinker.tinkerStop', async function () {
+		let document = vscode.window.activeTextEditor.document;
+		if (obj.editors.has(document)) {
+			obj.editors.get(document).panel.dispose();
+			obj.editors.delete(document);
+		}
+	});
+	let disposableNew = vscode.commands.registerCommand('php-tinker.tinkerNew', async function () {
 		// The code you place here will be executed every time your command is executed
+		let document = await vscode.workspace.openTextDocument({ language: 'php', content: '<?php\n' });
+		obj.editors.set(document, { ...obj._template });
+		obj.editors.get(document).document = document;
+		await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.One });
 
-		if (!obj.document) {
-			obj.document = await vscode.workspace.openTextDocument({ language: 'php', content: '<?php\n' });
+		if (!obj.editors.get(document).panel) {
+			createPanel(obj.editors.get(document));
 		}
-		await vscode.window.showTextDocument(obj.document, { preview: false });
+		if (document.getText() !== '<?php\n') {
+			runner(obj.editors.get(document));
+		}
 
-		if (!obj.panel) {
-			createPanel(obj);
-		}
-		if (obj.document.getText() !== '<?php\n') {
-			runner(obj);
-		}
-		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((textEditor) => {
-			if (textEditor.document === obj.document) {
-				if (obj.panel) {
-					runner(obj);
-					obj.hadPanel = true;
-				}
-			} else {
-				if (obj.panel) {
-					obj.panel.dispose();
-					obj.hadPanel = true;
-				}
-			}
-		}));
-		context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(textDoc => {
-			if (textDoc === obj.document) {
-				obj.panel.dispose();
-				obj.document = null;
-			}
-		}));
-		let text = obj.document.getText();
-		context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection((changeText) => {
-			if (changeText.textEditor.document === obj.document && text !== changeText.textEditor.document.getText()) {
-				text = changeText.textEditor.document.getText()
-				runner(obj);
-			}
-		}))
+		obj.editors.get(document).text = document.getText();
 	});
 
-	context.subscriptions.push(disposable);
+	let disposableHere = vscode.commands.registerCommand('php-tinker.tinkerHere', async function () {
+		// The code you place here will be executed every time your command is executed
+		let document = vscode.window.activeTextEditor.document;
+		if (!obj.editors.has(document)) {
+			obj.editors.set(document, { ...obj._template });
+			obj.editors.get(document).document = document;
+
+			if (!obj.editors.get(document).panel) {
+				createPanel(obj.editors.get(document));
+			}
+			if (document.getText() !== '<?php\n') {
+				runner(obj.editors.get(document));
+			}
+
+			obj.editors.get(document).text = document.getText();
+		}
+	});
+
+	context.subscriptions.push(disposableNew);
+	context.subscriptions.push(disposableHere);
+	context.subscriptions.push(disposableStop);
 }
 
 

@@ -11,14 +11,24 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:php-tinker.tinkerThis"
+		"onCommand:php-tinker.tinkerNew",
+		"onCommand:php-tinker.tinkerHere",
+		"onCommand:php-tinker.tinkerStop"
 	],
 	"main": "./extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "php-tinker.tinkerThis",
-				"title": "PHP Tinker"
+				"command": "php-tinker.tinkerNew",
+				"title": "PHP Tinker: Create new"
+			},
+			{
+				"command": "php-tinker.tinkerHere",
+				"title": "PHP Tinker: This file"
+			},
+			{
+				"command": "php-tinker.tinkerStop",
+				"title": "PHP Tinker: Stop watching this file"
 			}
 		]
 	},
