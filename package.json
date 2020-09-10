@@ -2,7 +2,7 @@
 	"name": "php-tinker",
 	"displayName": "PHP Tinker",
 	"description": "Tinker",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"engines": {
 		"vscode": "^1.48.0"
 	},
