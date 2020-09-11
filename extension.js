@@ -91,13 +91,13 @@ function activate(context) {
 	let previousDocument = vscode.window.activeTextEditor.document;
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((textEditor) => {
 		let document = textEditor.document;
-		if (obj.editors.has(document)) {
+		if (document != previousDocument && obj.editors.has(document)) {
 			if (obj.editors.get(document).panel) {
 				runner(obj.editors.get(document));
 				obj.editors.get(document).hadPanel = true;
 			}
 		}
-		if (previousDocument && obj.editors.has(previousDocument) && obj.editors.get(previousDocument).panel) {
+		if (document != previousDocument && obj.editors.has(previousDocument) && obj.editors.get(previousDocument).panel) {
 			if (obj.editors.get(previousDocument).panel) {
 				obj.editors.get(previousDocument).panel.dispose();
 				obj.editors.get(previousDocument).hadPanel = true;
@@ -133,11 +133,11 @@ function activate(context) {
 		let document = await vscode.workspace.openTextDocument({ language: 'php', content: '<?php\n' });
 		obj.editors.set(document, { ...obj._template });
 		obj.editors.get(document).document = document;
-		await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.One });
 
 		if (!obj.editors.get(document).panel) {
 			createPanel(obj.editors.get(document));
 		}
+		await vscode.window.showTextDocument(document, { preserveFocus: true, preview: false, viewColumn: vscode.ViewColumn.One });
 		if (document.getText() !== '<?php\n') {
 			runner(obj.editors.get(document));
 		}
@@ -151,10 +151,11 @@ function activate(context) {
 		if (!obj.editors.has(document)) {
 			obj.editors.set(document, { ...obj._template });
 			obj.editors.get(document).document = document;
-
+			vscode.workspace
 			if (!obj.editors.get(document).panel) {
 				createPanel(obj.editors.get(document));
 			}
+			await vscode.window.showTextDocument(document, { preserveFocus: true, preview: false, viewColumn: vscode.ViewColumn.One });
 			if (document.getText() !== '<?php\n') {
 				runner(obj.editors.get(document));
 			}
