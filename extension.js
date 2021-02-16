@@ -39,7 +39,7 @@ function runner(obj) {
 	obj.running = setTimeout(function () {
 
 		let code = obj.document.getText().replace('<?php', '').trim() + ';dd();';
-		let child = spawn(vscode.workspace.getConfiguration().get('php.validate.executablePath'), ['artisan', 'tinker'], {
+		let child = spawn(vscode.workspace.getConfiguration().get('php.validate.executablePath') || 'php', ['artisan', 'tinker'], {
 			cwd: vscode.workspace.workspaceFolders[0].uri.fsPath,
 			env: {
 				...process.env,
