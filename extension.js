@@ -63,9 +63,35 @@ function runner(obj) {
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title>PHP Tinker</title>
 			</head>
-			<body>${'<pre>' + stdoutput + '</pre>'}<style>html,body {background:#18171B;color:#fff;} * {outline: 0}</style></body ></html > `;
+			<body>${'<pre>' + stdoutput + '</pre>'}<style>html,body {background:#18171B;color:#fff;} * {outline: 0} table {border-collapse: collapse; border-spacing: 0;} td {border: 1px solid #ccc; padding: 8px}</style></body ></html > `;
 		});
-		child.stdin.write(code, () => {
+
+		child.stdin.write(`
+		function table($data) {
+			$first = false;
+			echo '<table>';
+			foreach($data as $row) {
+				if (!$first) {
+					$first = true;
+					echo '<tr>';
+					foreach($row as $column => $v) {
+						echo '<td>';
+						echo $column;
+						echo '</td>';
+					}
+					echo '</tr>';
+				}
+				echo '<tr>';
+				foreach($row as $column) {
+					echo '<td>';
+					echo $column;
+					echo '</td>';
+				}
+				echo '</tr>';
+			}
+			echo '</table>';
+		}
+		${code}`, () => {
 			child.stdin.end();
 		})
 
