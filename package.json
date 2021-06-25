@@ -6,6 +6,9 @@
 	"engines": {
 		"vscode": "^1.48.0"
 	},
+	"repository": {
+		"url": "https://github.com/DominicVonk/php-tinker"
+	},
 	"publisher": "DominicVonk",
 	"categories": [
 		"Other"
