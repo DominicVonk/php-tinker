@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const spawn = require('child_process').spawn;
+const path = require('path');
+const fs = require('fs');
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 
@@ -65,32 +67,9 @@ function runner(obj) {
 			</head>
 			<body>${'<pre>' + stdoutput + '</pre>'}<style>html,body {background:#18171B;color:#fff;} * {outline: 0} table {border-collapse: collapse; border-spacing: 0;} td {border: 1px solid #ccc; padding: 8px}</style></body ></html > `;
 		});
-
-		child.stdin.write(`
-		function table($data) {
-			$first = false;
-			echo '<table>';
-			foreach($data as $row) {
-				if (!$first) {
-					$first = true;
-					echo '<tr>';
-					foreach($row as $column => $v) {
-						echo '<td>';
-						echo $column;
-						echo '</td>';
-					}
-					echo '</tr>';
-				}
-				echo '<tr>';
-				foreach($row as $column) {
-					echo '<td>';
-					echo $column;
-					echo '</td>';
-				}
-				echo '</tr>';
-			}
-			echo '</table>';
-		}
+		console.log(`${fs.readFileSync(path.join(__dirname, 'utils.php')).toString('utf8').split('\n').slice(1).join('\n')}');
+		${code}`);
+		child.stdin.write(`${fs.readFileSync(path.join(__dirname, 'utils.php')).toString('utf8').split('\n').slice(1).join('\n')}
 		${code}`, () => {
 			child.stdin.end();
 		})

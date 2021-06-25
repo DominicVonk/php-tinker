@@ -1,0 +1,10 @@
+{
+    "Print to table": {
+        "prefix": "table",
+        "body": [
+            "PHPTinker::table($1);",
+            "$2"
+        ],
+        "description": "Print output to table"
+    }
+}

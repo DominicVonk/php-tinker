@@ -42,17 +42,23 @@
 		"menus": {
 			"editor/context": [
 				{
-					"when": "resourceLangId == php",
+					"when": "editorLangId == php",
 					"command": "php-tinker.tinkerHere",
 					"group": "phptinker@1"
 				},
 				{
-					"when": "resourceLangId == php",
+					"when": "editorLangId == php",
 					"command": "php-tinker.tinkerSelected",
 					"group": "phptinker@1"
 				}
 			]
-		}
+		},
+		"snippets": [
+			{
+				"language": "php",
+				"path": "./snippets.json"
+			}
+		]
 	},
 	"scripts": {
 		"lint": "eslint .",
