@@ -2,7 +2,7 @@
 	"name": "php-tinker",
 	"displayName": "PHP Tinker",
 	"description": "Tinker",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"engines": {
 		"vscode": "^1.48.0"
 	},
@@ -16,7 +16,8 @@
 	"activationEvents": [
 		"onCommand:php-tinker.tinkerNew",
 		"onCommand:php-tinker.tinkerHere",
-		"onCommand:php-tinker.tinkerStop"
+		"onCommand:php-tinker.tinkerStop",
+		"onCommand:php-tinker.tinkerSelected"
 	],
 	"main": "./extension.js",
 	"contributes": {
@@ -30,10 +31,28 @@
 				"title": "PHP Tinker: This file"
 			},
 			{
+				"command": "php-tinker.tinkerSelected",
+				"title": "PHP Tinker: This selection"
+			},
+			{
 				"command": "php-tinker.tinkerStop",
 				"title": "PHP Tinker: Stop watching this file"
 			}
-		]
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"when": "resourceLangId == php",
+					"command": "php-tinker.tinkerHere",
+					"group": "phptinker@1"
+				},
+				{
+					"when": "resourceLangId == php",
+					"command": "php-tinker.tinkerSelected",
+					"group": "phptinker@1"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"lint": "eslint .",

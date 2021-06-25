@@ -170,6 +170,30 @@ function activate(context) {
 		obj.editors.get(document).text = document.getText();
 	});
 
+	let disposableSelected = vscode.commands.registerCommand('php-tinker.tinkerSelected', async function () {
+		// The code you place here will be executed every time your command is executed
+		var editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return; // No open text editor
+		}
+
+		var selection = editor.selection;
+		var text = editor.document.getText(selection);
+		let document = await vscode.workspace.openTextDocument({ language: 'php', content: '<?php\n' + text });
+		obj.editors.set(document, { ...obj._template });
+		obj.editors.get(document).document = document;
+
+		if (!obj.editors.get(document).panel) {
+			createPanel(obj.editors.get(document));
+		}
+		await vscode.window.showTextDocument(document, { preserveFocus: true, preview: false, viewColumn: vscode.ViewColumn.One });
+		if (document.getText() !== '<?php\n') {
+			runner(obj.editors.get(document));
+		}
+
+		obj.editors.get(document).text = document.getText();
+	});
+
 	let disposableHere = vscode.commands.registerCommand('php-tinker.tinkerHere', async function () {
 		// The code you place here will be executed every time your command is executed
 		let document = vscode.window.activeTextEditor.document;
@@ -192,6 +216,7 @@ function activate(context) {
 	context.subscriptions.push(disposableNew);
 	context.subscriptions.push(disposableHere);
 	context.subscriptions.push(disposableStop);
+	context.subscriptions.push(disposableSelected);
 }
 
 
